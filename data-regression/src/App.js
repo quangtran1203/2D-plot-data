@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import regression from "regression";
 import functionPlot from "function-plot";
 import "./App.css";
+import { PlotArchived } from "./PlotArchived";
 
 function App() {
   const [selectedCurve, setSelectedCurve] = useState("");
@@ -9,29 +10,37 @@ function App() {
   const [equation, setEquation] = useState("");
   const [fetchData, setFetchData] = useState([]);
 
+  const [isLoading, setLoading] = useState(true);
+
   let width = 800;
   let height = 500;
 
   // use useEffect to fetch all archived plots on page refresh
   // GET req to backend
+
   useEffect(() => {
-    const plotGraphs = () => {
-      fetch("http://localhost:5000")
-        .then((res) => res.json())
-        .then((json) => {
-          setFetchData(json.data);
-          console.log(json.data);
-        });
-    };
-    plotGraphs();
-    console.log(fetchData);
+    fetch("http://localhost:5000")
+      .then(res => res.json())
+      .then(data => {
+        setFetchData(data.data);
+        setLoading(false);
+      })
   }, []);
+
+  const renderSavedPlots = () => {
+    if (isLoading) {
+      return <p>Loading ...</p>
+    }
+    if (fetchData.length === 0) {
+      return null;
+    }
+    console.log(fetchData);
+    return fetchData.map((plot, index) => <PlotArchived index={index} equation={plot.equation} key={index} pointSet={plot.pointSet} selectedCurve={plot.selectedCurve} />)
+  }
 
   const handleCurveChange = (e) => {
     setSelectedCurve(e.target.value);
   };
-
-  const plotArchive = (pointSet, selectedCurve, equation) => {};
 
   const handlePlotPoints = () => {
     const inputPoints = document.getElementById("points").value;
@@ -116,6 +125,7 @@ function App() {
 
         functionPlot({
           target: "#graphContainer",
+          title: "y" + " = " + functionString,
           yAxis: { label: "y" },
           xAxis: { label: "x" },
           tip: {
@@ -158,6 +168,7 @@ function App() {
 
         functionPlot({
           target: "#graphContainer",
+          title: "y" + " = " + functionString,
           yAxis: { label: "y" },
           xAxis: { label: "x" },
           tip: {
@@ -206,7 +217,7 @@ function App() {
       const result = await res.json();
       console.log(result);
       alert(result.message);
-    } catch (error) {}
+    } catch (error) { }
   };
 
   return (
@@ -214,8 +225,8 @@ function App() {
       <div>
         <div>
           <label htmlFor="points">
-            Enter 2D Points coordinates separated by a space. Eg: 1,2 3,4 means
-            (1,2) and (3,4) as points
+            Enter 2D Points coordinates separated by a space. Eg: 1.5,2 3,4 means
+            (1.5,2) and (3,4) as points
             <input id="points" type="text" placeholder="eg: 1,2 3,4" />
           </label>
           <button onClick={handlePlotPoints}>Plot Points</button>
@@ -244,10 +255,15 @@ function App() {
         <div id="graphContainer"></div>
 
         {selectedCurve !== "" && (
-          <button onClick={handleArchive}>ARCHdIVE PLOTs</button>
+          <>
+            <button onClick={handleArchive}>ARCHIVE PLOT</button>
+            <p>After plotting the best curve of fit, you can archive the desired plot by clicking the button above</p>
+          </>
         )}
 
-        <div id="archivedPlots"></div>
+        <div id="archivedPlots">
+          {renderSavedPlots()}
+        </div>
       </div>
     </div>
   );

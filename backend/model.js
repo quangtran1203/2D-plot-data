@@ -6,4 +6,4 @@ const PlotSchema = new mongoose.Schema({
   selectedCurve: String,
 });
 
-export default mongoose.model("plotss", PlotSchema);
+export default mongoose.model("plots", PlotSchema);
