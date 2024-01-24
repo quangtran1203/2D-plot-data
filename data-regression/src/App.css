@@ -1,0 +1,14 @@
+* {
+  margin: 8px;
+}
+
+button:hover {
+  cursor: pointer;
+}
+
+.App {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
