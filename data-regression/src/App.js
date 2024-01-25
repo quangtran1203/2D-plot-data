@@ -8,35 +8,25 @@ function App() {
   const [selectedCurve, setSelectedCurve] = useState("");
   const [pointSet, setPointSet] = useState([]);
   const [equation, setEquation] = useState("");
+
   const [fetchData, setFetchData] = useState([]);
-
   const [isLoading, setLoading] = useState(true);
-
-  let width = 800;
-  let height = 500;
+  const [isSending, setSending] = useState(false);
 
   // use useEffect to fetch all archived plots on page refresh
   // GET req to backend
 
   useEffect(() => {
     fetch("http://localhost:5000")
-      .then(res => res.json())
-      .then(data => {
+      .then((res) => res.json())
+      .then((data) => {
         setFetchData(data.data);
         setLoading(false);
-      })
+      });
   }, []);
 
-  const renderSavedPlots = () => {
-    if (isLoading) {
-      return <p>Loading ...</p>
-    }
-    if (fetchData.length === 0) {
-      return null;
-    }
-    console.log(fetchData);
-    return fetchData.map((plot, index) => <PlotArchived index={index} equation={plot.equation} key={index} pointSet={plot.pointSet} selectedCurve={plot.selectedCurve} />)
-  }
+  let width = 800;
+  let height = 500;
 
   const handleCurveChange = (e) => {
     setSelectedCurve(e.target.value);
@@ -200,7 +190,14 @@ function App() {
   };
 
   const handleArchive = async () => {
+    if (equation === "" || selectedCurve === "" || pointSet.length === 0) {
+      alert(
+        "You must generate a plot with points and a curve to archive! \n Insufficient inputs"
+      );
+      return;
+    }
     // send POST req to backend to save a new plot in DB
+    setSending(true);
     try {
       const res = await fetch("http://localhost:5000", {
         method: "POST",
@@ -215,9 +212,32 @@ function App() {
       });
 
       const result = await res.json();
-      console.log(result);
+      setSending(false);
       alert(result.message);
-    } catch (error) { }
+    } catch (error) {
+      alert(error);
+    }
+  };
+
+  // render all archived plots
+  const renderSavedPlots = () => {
+    if (isLoading) {
+      return <p>Retrieving plots ...</p>;
+    }
+    if (fetchData.length === 0) {
+      return null;
+    }
+    return fetchData.map((plot, index) => {
+      return (
+        <PlotArchived
+          key={index}
+          equation={plot.equation}
+          index={index}
+          pointSet={plot.pointSet}
+          selectedCurve={plot.selectedCurve}
+        />
+      );
+    });
   };
 
   return (
@@ -225,8 +245,8 @@ function App() {
       <div>
         <div>
           <label htmlFor="points">
-            Enter 2D Points coordinates separated by a space. Eg: 1.5,2 3,4 means
-            (1.5,2) and (3,4) as points
+            Enter 2D Points coordinates separated by a space. Eg: 1.5,2 3,4
+            means (1.5,2) and (3,4) as points
             <input id="points" type="text" placeholder="eg: 1,2 3,4" />
           </label>
           <button onClick={handlePlotPoints}>Plot Points</button>
@@ -257,12 +277,19 @@ function App() {
         {selectedCurve !== "" && (
           <>
             <button onClick={handleArchive}>ARCHIVE PLOT</button>
-            <p>After plotting the best curve of fit, you can archive the desired plot by clicking the button above</p>
+            {isSending && <span>Processing ...</span>}
+            <p>
+              After plotting the best curve of fit, you can archive the desired
+              plot by clicking the button above.
+            </p>
+            <p>(Archived plots will be rendered out after a page refresh)</p>
           </>
         )}
 
         <div id="archivedPlots">
-          {renderSavedPlots()}
+          {fetchData.length !== 0 && <h4>Your archived plots:</h4>}
+          <p>-----------------------------------------------------</p>
+          <div className="plotsContainer">{renderSavedPlots()}</div>
         </div>
       </div>
     </div>

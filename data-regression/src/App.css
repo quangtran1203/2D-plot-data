@@ -12,3 +12,22 @@ button:hover {
   justify-content: center;
   align-items: center;
 }
+
+#archivedPlots {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.plotsContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+}
+
+.scatter {
+  opacity: 1 !important;
+}

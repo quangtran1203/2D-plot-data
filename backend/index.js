@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import mongoose from "mongoose";
+import { body } from "express-validator";
 import { MONGO_DB_URI, PORT } from "./config.js";
 import Plot from "./model.js";
 
@@ -19,26 +20,39 @@ mongoose
   .catch((err) => console.log(err));
 
 // create a new plot and save to db
-app.post("/", async (req, res) => {
-  const { pointSet, equation, selectedCurve } = req.body;
-  const newPlot = new Plot({
-    pointSet,
-    equation,
-    selectedCurve,
-  });
-
-  await newPlot.save();
-
-  res.status(201).json({
-    status: 201,
-    message: "Plot archived successfully",
-    data: {
+// included middleware to check for invalid req body
+app.post(
+  "/",
+  body("pointSet")
+    .isArray()
+    .withMessage("Error occurred when processing point input!"),
+  body("equation")
+    .notEmpty()
+    .withMessage("Invalid equation. Must not be empty!"),
+  body("selectedCurve")
+    .notEmpty()
+    .withMessage("Curve type invalid! Must be linear or quadratic or cubic"),
+  async (req, res) => {
+    const { pointSet, equation, selectedCurve } = req.body;
+    const newPlot = new Plot({
       pointSet,
       equation,
       selectedCurve,
-    },
-  });
-});
+    });
+
+    await newPlot.save();
+
+    res.status(201).json({
+      status: 201,
+      message: "Plot archived successfully",
+      data: {
+        pointSet,
+        equation,
+        selectedCurve,
+      },
+    });
+  }
+);
 
 // retrieve all saved plots
 app.get("/", async (req, res) => {
